@@ -9,21 +9,24 @@
 
 #include <cassert>
 #include <iostream>
+#include <cmath>
+#include <algorithm>
 
 //IMPORTANT: to allow for multiple instance creation/destruction, the contect of the layer must be re-initialized when the instance is being destroyed.
 //Hooking xrDestroyInstance is the best way to do that.
 XRAPI_ATTR XrResult XRAPI_CALL thisLayer_xrDestroyInstance(
-	XrInstance instance)
+    XrInstance instance)
 {
-	PFN_xrDestroyInstance nextLayer_xrDestroyInstance = GetNextLayerFunction(xrDestroyInstance);
+    static PFN_xrDestroyInstance next = nullptr;
+    if (!next)
+        next = GetNextLayerFunction(xrDestroyInstance);
 
-	OpenXRLayer::DestroyLayerContext();
+    const auto result = next(instance);
 
-	assert(nextLayer_xrDestroyInstance != nullptr);
-	return nextLayer_xrDestroyInstance(instance);
+    OpenXRLayer::DestroyLayerContext();
+
+    return result;
 }
-
-
 
 //Define the functions implemented in this layer like this:
 XRAPI_ATTR XrResult XRAPI_CALL thisLayer_xrEndFrame(XrSession session, const XrFrameEndInfo* frameEndInfo)
